@@ -43,7 +43,7 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 # Options
 # ==========================================================================
 
-STRIP_HISTORY      ?= StripHistoryAR+ArR.c
+#STRIP_HISTORY      ?= StripHistoryAR+ArR.c
 ARCHIVER_CALL      ?= NONE
 USE_ARCHIVE_RECORD ?= NO
 
@@ -104,9 +104,9 @@ endif
 #endif
 
 STRIP_DAQ	= StripCA.c
-#STRIP_HISTORY	= StripHistoryNULL.c
+STRIP_HISTORY	= StripHistoryNULL.c
 USE_CLUES	?= YES
-USE_SDDS	?= YES
+#USE_SDDS	?= YES
 
 ifeq ($(STRIP_DAQ),StripCDEV.cc)
   USE_CDEV	= YES
