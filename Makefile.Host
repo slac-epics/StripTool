@@ -116,6 +116,7 @@ endif
 # STRIP_CONFIGFILE_DIR is invalid.  If STRIP_CONFIGFILE_DIR is not
 # defined here, then the value in StripDefines.h will be used.
 #STRIP_CONFIGFILE_DIR=\"/applic/stripTool\"
+STRIP_CONFIGFILE_DIR=\"/nfs/slac/g/lcls/tools/StripTool/config\"
 
 # WIN32
 WIN32_RUNTIME=MD
