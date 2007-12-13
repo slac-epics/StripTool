@@ -395,6 +395,9 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
   StripConfigMask       scfg_mask;
   Atom                  WM_DELETE_WINDOW;
   Arg                   args[5];
+  /* SLAC RonC addition here: ---- */
+  char                  *temp_str;
+  /* ----------------------------- */
 
   if ((sd = (StripDialogInfo *)malloc (sizeof (StripDialogInfo))) != NULL)
   {
@@ -468,7 +471,12 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
        XmNuserData,                     sd,
        XmNfileTypeMask,         XmFILE_REGULAR,
        NULL);
-    xstr = XmStringCreateLocalized (STRIP_CONFIGFILE_DIR);
+    /* SLAC RonC Change 8/2002 */
+    /* xstr = XmStringCreateLocalized (STRIP_CONFIGFILE_DIR); */
+    temp_str = getenv("STRIP_CONFIGFILE_DIR");
+    if(!temp_str) temp_str = STRIP_CONFIGFILE_DIR;
+       xstr = XmStringCreateLocalized (temp_str);
+    /* End of Ronc Change */
     XtVaSetValues (sd->fs.dlg, XmNdirectory, xstr, NULL);
     XmStringFree (xstr);
     xstr = XmStringCreateLocalized (STRIP_CONFIGFILE_PATTERN);
