@@ -3500,13 +3500,15 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
 	  "where you can use Paint or another program to\n"
 	  "display or print it.");
 #else /* DESY_PRINT */
-# if defined(SOLARIS)
+/* jrock commented stuff out here so that we always use xwd | xwdtopnm | pnmtops | lp */
+/* # if defined(SOLARIS) */
     if (strcmp (si->print_info.device, "ps") == 0)
 	sprintf
 	  (cmd_buf,
 	    "xwd -id %u | xwdtopnm | pnmtops | lp -d%s -onb",
 	    (unsigned)XtWindow (si->graph_form),
 	    si->print_info.printer);
+/*
     else
 # endif
 	sprintf
@@ -3515,6 +3517,7 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
 	    (int)XtWindow (si->graph_form),
 	    si->print_info.device,
 	    si->print_info.printer);
+*/
     if (!(pid = fork ()))
     {
 	/* Child (pid=0) */
