@@ -40,6 +40,7 @@
 #include "StripDataSource.h"
 #include "StripHistory.h"
 #include "StripGraph.h"
+#include "StripDAQ.h"
 #include "StripMisc.h"
 #include "StripFallback.h"
 
@@ -114,10 +115,6 @@
 #include <Xm/ToggleB.h>
 
 #ifdef WIN32
-#elif 0
-/* KE: Don't know what this is used for and want to make unistd.h be
-the default.  So leave it out for now. */
-# include <vfork.h>
 #else
 # include <unistd.h>
 #endif
@@ -257,6 +254,7 @@ typedef struct _StripInfo
   StripDataSource       data;
   StripHistory          history;
   StripGraph            graph;
+  StripDAQ              daq;
   unsigned              status;
   PrintInfo             print_info;
   PrinterDialog         *pd;
@@ -1271,6 +1269,9 @@ int     Strip_setattr   (Strip the_strip, ...)
 	  break;
 	case STRIP_DISCONNECT_DATA:
 	  si->disconnect_data = va_arg (ap, void *);
+	  break;
+	case STRIP_DAQ:
+	  si->daq = va_arg (ap, void *);
 	  break;
       }
   }
@@ -3280,6 +3281,7 @@ typedef enum
   POPUPMENU_PRINT,
   POPUPMENU_SNAPSHOT,
   POPUPMENU_DUMP,
+  POPUPMENU_RETRY,
   POPUPMENU_DISMISS,
   POPUPMENU_QUIT,
   POPUPMENU_ITEMCOUNT
@@ -3294,8 +3296,9 @@ char    *PopupMenuItemStr[POPUPMENU_ITEMCOUNT] =
   "Print",
   "Snapshot",
   "Dump Data...",
+  "Retry Connections",
   "Dismiss",
-  "Quit"
+  "Quit",
 };
 
 char    PopupMenuItemMnemonic[POPUPMENU_ITEMCOUNT] =
@@ -3306,6 +3309,7 @@ char    PopupMenuItemMnemonic[POPUPMENU_ITEMCOUNT] =
   'P',
   'S',
   'D',
+  'R',
   'm',
   'Q'
 };
@@ -3319,11 +3323,13 @@ char    *PopupMenuItemAccelerator[POPUPMENU_ITEMCOUNT] =
   " ",
   " ",
   " ",
+  " ",
   "Ctrl<Key>c"
 };
 
 char    *PopupMenuItemAccelStr[POPUPMENU_ITEMCOUNT] =
 {
+  " ",
   " ",
   " ",
   " ",
@@ -3475,8 +3481,9 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
 	  si->print_info.device,
 	  si->print_info.printer);
     /*printf(" cmd_buf=%s\n",cmd_buf );*/
-    if (pid = fork ())
+    if (!(pid = fork ()))
     {
+	/* Child (pid=0) */
 	execl ("/bin/sh", "sh", "-c", cmd_buf, 0);
 	exit (0);
     }
@@ -3508,12 +3515,13 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
 	    (int)XtWindow (si->graph_form),
 	    si->print_info.device,
 	    si->print_info.printer);
-    if ((pid = fork ()))
+    if (!(pid = fork ()))
     {
+	/* Child (pid=0) */
 	execl ("/bin/sh", "sh", "-c", cmd_buf, 0);
 	exit (0);
     }
-#endif /* DESY_PRINT */               
+#endif /* DESY_PRINT */
     break;
         
   case POPUPMENU_SNAPSHOT:
@@ -3531,8 +3539,9 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
 	(cmd_buf,
 	  "xwd -id %d | xwud -raw",
 	  (int)XtWindow (si->graph_form));
-    if ((pid = fork ()))
+    if (!(pid = fork ()))
     {
+	/* Child (pid=0) */
 	execl ("/bin/sh", "sh", "-c", cmd_buf, 0);
 	exit (0);
     }
@@ -3543,6 +3552,10 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
     fsdlg_popup ((Strip)si, (fsdlg_functype)Strip_dumpdata);
     break;
         
+  case POPUPMENU_RETRY:
+    StripDAQ_retry_connections(si->daq, si->display);
+    break;
+    
   case POPUPMENU_DISMISS:
     if (StripDialog_ismapped (si->dialog) || StripDialog_isiconic (si->dialog))
     {
