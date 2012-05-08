@@ -39,6 +39,11 @@
 TOP=../..
 include $(TOP)/configure/CONFIG
 
+#CROSS_COMPILER_TARGET_ARCHS = linux-x86
+#BUILD_FOR_HOST_ARCH =
+STATIC_BUILD=NO
+SHRLIB_SEARCH_DIRS += /usr/lib
+
 # ==========================================================================
 # Options
 # ==========================================================================
@@ -112,7 +117,7 @@ endif
 STRIP_DAQ	= StripCA.c
 #STRIP_HISTORY	= StripHistoryNULL.c
 USE_CLUES	?= YES
-USE_SDDS	?= YES
+USE_SDDS	:= NO
 
 ifeq ($(STRIP_DAQ),StripCDEV.cc)
   USE_CDEV	= YES
@@ -338,18 +343,23 @@ StripTool.res:../StripTool.ico
 # Debugging (Do gnumake xxxx in O.whatever directory)
 # ==========================================================================
 xxxx:
-	@echo USR_LDFLAGS: $(USR_LDFLAGS)
-	@echo LDFLAGS: $(LDFLAGS)
-	@echo STRIP_CONFIGFILE_DIR: $(STRIP_CONFIGFILE_DIR)
-	@echo EPICS_EXTENSIONS_LIB: $(EPICS_EXTENSIONS_LIB)
-	@echo EPICS_EXTENSIONS_INCLUDE: $(EPICS_EXTENSIONS_INCLUDE)
-	@echo XPM_LIB: $(XPM_LIB)
-	@echo HAVE_XPM: $(HAVE_XPM)
-	@echo z_DIR: $(z_DIR)
-	@echo ZLIB_FOUND: $(ZLIB_FOUND)
-	@echo RUNTIME_LDFLAGS: $(RUNTIME_LDFLAGS)
 	@echo BASE_3_14: $(BASE_3_14)
+	@echo BUILD_FOR_HOST_ARCH: $(BUILD_FOR_HOST_ARCH)  
+	@echo CROSS_COMPILER_TARGET_ARCHS: $(CROSS_COMPILER_TARGET_ARCHS)  
+	@echo EPICS_BASE: $(EPICS_BASE)  
+	@echo EPICS_EXTENSIONS_INCLUDE: $(EPICS_EXTENSIONS_INCLUDE)
+	@echo EPICS_EXTENSIONS_LIB: $(EPICS_EXTENSIONS_LIB)
 	@echo FULL_PATH_INSTALL_LIB: $(FULL_PATH_INSTALL_LIB)
+	@echo HAVE_XPM: $(HAVE_XPM)
+	@echo HOST_ARCH: $(HOST_ARCH)
+	@echo LDFLAGS: $(LDFLAGS)
+	@echo RUNTIME_LDFLAGS: $(RUNTIME_LDFLAGS)
+	@echo STRIP_CONFIGFILE_DIR: $(STRIP_CONFIGFILE_DIR)
+	@echo USR_LDFLAGS: $(USR_LDFLAGS)
+	@echo X11_LIB: $(X11_LIB)  
+	@echo XPM_LIB: $(XPM_LIB)
+	@echo ZLIB_FOUND: $(ZLIB_FOUND)
+	@echo z_DIR: $(z_DIR)
 
 # **************************** Emacs Editing Sequences *****************
 # Local Variables:

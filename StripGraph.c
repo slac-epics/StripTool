@@ -480,7 +480,7 @@ static void StripGraph_manage_geometry (StripGraphInfo *sgi)
      XmNheight,         &h,
      XmNx,              &x,
      XmNy,              &y,
-     0);
+     NULL);
 
   sgi->window_rect.width = w;
   sgi->window_rect.height = h;
@@ -490,10 +490,12 @@ static void StripGraph_manage_geometry (StripGraphInfo *sgi)
     (sgi->x_axis,
      XmNx,                      &xx,
      XmNwidth,                  &w,
-     0);
+     NULL);
   minpos = x + sgi->window_rect.x - xx;
   maxpos = minpos + sgi->window_rect.width - 1;
   
+  /* printf("x minpos %d maxpos %d\n", minpos, maxpos); */
+
   XtVaSetValues
     (sgi->x_axis,
      XjNminPos,                 minpos,
@@ -505,9 +507,11 @@ static void StripGraph_manage_geometry (StripGraphInfo *sgi)
     (sgi->y_axis,
      XmNy,                      &yy,
      XmNheight,                 &h,
-     0);
+     NULL);
   minpos = (yy + h) - (y + sgi->window_rect.y + sgi->window_rect.height);
   maxpos = minpos + sgi->window_rect.height - 1;
+
+  /* printf("y minpos %d maxpos %d\n", minpos, maxpos); */
 
   XtVaSetValues
     (sgi->y_axis,
@@ -683,7 +687,7 @@ void StripGraph_draw    (StripGraph     the_graph,
    */
   if (update_loc_lbl)
   {
-    XtVaGetValues (sgi->y_axis, XjNtextColor, &text_color, 0);
+    XtVaGetValues (sgi->y_axis, XjNtextColor, &text_color, NULL);
     XtVaSetValues
       (sgi->loc_lbl,
        XmNforeground,   text_color,

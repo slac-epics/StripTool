@@ -1038,7 +1038,9 @@ static Boolean
 ValidateValues          (AxisWidget cw)
 {
   Boolean       ret = True;
-  
+
+/*  printf("%p max %e min %e\n", cw, cw->axis.max_val, cw->axis.min_val); */
+
   if ((cw->axis.max_val - cw->axis.min_val) <= DBL_EPSILON)
   {
     XtAppWarningMsg
@@ -1046,6 +1048,7 @@ ValidateValues          (AxisWidget cw)
        "ValidateValues", "badValue", "XmCMinVal",
        "Axis: minVal is greater than or equal to maxVal",
        (String *)0, (Cardinal *)0);
+	/* printf("%p max %e min %e\n", cw, cw->axis.max_val, cw->axis.min_val); */
     cw->axis.min_val = DEFAULT_MINVAL;
     cw->axis.max_val = DEFAULT_MAXVAL;
     ret = False;
