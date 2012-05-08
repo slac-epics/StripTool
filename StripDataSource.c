@@ -279,6 +279,7 @@ StripDataSource_getattr (StripDataSource the_sds, ...)
   StripDataSourceInfo   *sds = (StripDataSourceInfo *)the_sds;
   int                   attrib;
   int                   ret_val = 1;
+  size_t                index;
 
   
   va_start (ap, the_sds);
@@ -292,6 +293,13 @@ StripDataSource_getattr (StripDataSource the_sds, ...)
 	case SDS_NUMSAMPLES:
 	  *(va_arg (ap, size_t *)) = sds->buf_size;
 	  break;
+
+	case SDS_BEGIN_TIME:
+	  if (sds->count == sds->buf_size) index = (sds->cur_idx + 1) % sds->buf_size; 
+	  else index = 1;
+	  *(va_arg (ap, struct timeval *)) = sds->times[index];
+	  break;
+
       }
   }
 
@@ -715,7 +723,7 @@ StripDataSource_init_range      (StripDataSource        the_sds,
   CurveData             *cd;
   struct timeval        t1, t_tmp;
   struct timeval        h0, h1, *h_end;
-  long                  r0, r1;
+  long                  r0, r1 = 0;
   int                   have_data = 0;
   int                   i;
 
@@ -1207,6 +1215,9 @@ segmentify      (StripDataSourceInfo    *sds,
   int                   offset;
   int                   n_processed;
   Boolean               zero_points;
+
+  p1.x=0;
+  p1.y=0;
 
   /* NB: For this algorithm, we'll adopt the convention that
    * the first point in a segment will always hold the min

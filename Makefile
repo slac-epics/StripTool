@@ -48,6 +48,9 @@ SHRLIB_SEARCH_DIRS += /usr/lib
 # Options
 # ==========================================================================
 
+USE_CLUES	?= YES
+USE_SDDS	?= NO
+
 STRIP_HISTORY      ?= StripHistoryAR+ArR.c
 ARCHIVER_CALL      ?= NONE
 USE_ARCHIVE_RECORD ?= NO
@@ -74,15 +77,13 @@ PURIFY_FLAGS = -first-only -chain-length=50
 #PURIFY_FLAGS = -first-only -chain-length=26 -always-use-cache-dir -cache-dir=/tmp/purifycache
 #PURIFY_FLAGS = -first-only -chain-length=26 -enable-new-cache-scheme
 #PURIFY_FLAGS = -first-only -chain-length=26 -enable-new-cache-scheme -always-use-cache-dir -cache-dir=/tmp/purifycache
-
 # Put the cache files in the appropriate bin directory
 PURIFY_FLAGS += -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOP)/config/fullPathName.pl .)
-
-#USE_SDDS=NO
-#CC  = purify $(PURIFY_FLAGS) $($(ANSI)_$(CMPLR))
-#CXX = purify $(PURIFY_FLAGS) $($(CPLUSPLUS)_$(CXXCMPLR))
+# Don't use SDDS when debugging with purify
+USE_SDDS=NO
+# Uncomment following 2 lines to link with purify on solaris build
+#DEBUGCMD = purify $(PURIFY_FLAGS)
 #HOST_OPT=NO
-
 endif
 
 # libXm.so.4 Purify debugging for Sun
@@ -130,7 +131,7 @@ endif
 
 # WIN32
 WIN32_RUNTIME=MD
-USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
+USR_CFLAGS_WIN32 += -DWIN32 -D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
 USR_LIBS_WIN32 += $(EXCEED_XLIBS)
 USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
@@ -365,3 +366,15 @@ xxxx:
 # Local Variables:
 # mode: makefile
 # End:
+
+
+xxx:
+	@echo "CFLAGS = $($(BUILD_CLASS)_CFLAGS) $(POSIX_CFLAGS) $(OPT_CFLAGS) $(DEBUG_CFLAGS)"
+	@echo "$(PIPE_CFLAGS) $(WARN_CFLAGS) $(TARGET_CFLAGS) $(USR_CFLAGS) $(ARCH_DEP_CFLAGS)"
+	@echo "$(CODE_CFLAGS) $(STATIC_CFLAGS) $(OP_SYS_CFLAGS) $(LIBRARY_SRC_CFLAGS) $(HDEPENDS_CFLAGS)"
+	@echo "CODE_CFLAGS=$(CODE_CFLAGS)"
+	@echo "STATIC_CFLAGS=$(STATIC_CFLAGS)"
+	@echo "OP_SYS_CFLAGS=$(OP_SYS_CFLAGS)"
+	@echo "LIBRARY_SRC_CFLAGS=$(LIBRARY_SRC_CFLAGS)"
+	@echo "HDEPENDS_CFLAGS=$(HDEPENDS_CFLAGS)"
+

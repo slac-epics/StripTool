@@ -31,23 +31,24 @@
 
 #include "jlAxis.h"
 #include "StripGraph.h"
+#include "StripMisc.h"
 
 /* ====== Annotation stuff ====== */
 
-typedef struct _Rectangle
+typedef struct _STRectangle
 {
   double        x, y;             /* in time2dbl(time),value */
   int           rasterX, rasterY;    /* raster */
   Dimension     width, height;    /* raster */
 }
-Rectangle;
+STRectangle;
 
 typedef struct _Annotation
 {
   ELLNODE         node;
   char*           text;
   StripCurveInfo  *curve;
-  Rectangle       box;
+  STRectangle       box;
   int             numLines;
 }
 Annotation;
@@ -57,7 +58,7 @@ typedef struct _AnnotateDialog
   Widget        popupWidget;
   Widget        baseWidget;
   Widget        textWidget;
-  int           newAnnotation;
+  XtPointer     newAnnotation;
 }
 AnnotateDialog;
 
@@ -124,12 +125,15 @@ void  Annotation_draw(Display *display, Window window, GC gc,
   double            tempY;
   char             *ptr;
   char             *newptr;
-  int               len,diff;
+  intptr_t          len,diff;
   double            dl,db;
   struct timeval    dll;
   int               fontHeight;
   XGCValues         gcValues;
   int               linewidth = 1;
+  StripDataSource   sds;
+  struct timeval    sg_t0,sg_t1,sds_t0;
+  double            mintime;
 
   if (!ai) return; 
   if (!ai->annotationList) return; 
@@ -139,9 +143,23 @@ void  Annotation_draw(Display *display, Window window, GC gc,
 
   annotation = (Annotation*)ellFirst(ai->annotationList);
   if (!annotation) return;
+
   while (annotation) {
     transform = NULL;
     next = (Annotation*)ellNext((ELLNODE*)annotation);
+
+    /* Delete the annotation if it's location is out of data range and plot range */
+    StripGraph_getattr (ai->graph, STRIPGRAPH_BEGIN_TIME, &sg_t0, 0);
+    StripGraph_getattr (ai->graph, STRIPGRAPH_END_TIME, &sg_t1, 0);
+    StripGraph_getattr (ai->graph, STRIPGRAPH_DATA_SOURCE, &sds, 0);
+    StripDataSource_getattr (sds, SDS_BEGIN_TIME, &sds_t0, 0);
+    /* delete if box.x is out of plot range by at least one plot width */
+    mintime = time2dbl(&sg_t0) - (time2dbl(&sg_t1) - time2dbl(&sg_t0));
+    if (annotation->box.x < mintime && annotation->box.x < time2dbl(&sds_t0)) {
+      Annotation_delete(ai, annotation);
+      annotation = next;
+      continue;
+    }
 
     transform=StripGraph_getTransform(ai->graph, annotation->curve);
     if (!transform) {
@@ -269,6 +287,10 @@ void Annotation_deleteSelected(AnnotationInfo *ai)
   annotation = ai->selectedAnnotation;
   ai->selectedAnnotation = NULL;
   Annotation_delete(ai,annotation);
+
+  /* refresh the graph */
+  /* time to 0 and calling dispatch(). */
+  StripGraph_draw (ai->graph, SGCOMPMASK_DATA, (Region *)0);
 }
 
 
@@ -296,10 +318,6 @@ void Annotation_delete(AnnotationInfo *ai, Annotation *annotation)
     if (annotation->text) XtFree(annotation->text);
     free(annotation);
   }
-
-  /* refresh the graph */
-  /* time to 0 and calling dispatch(). */
-  StripGraph_draw (ai->graph, SGCOMPMASK_DATA, (Region *)0);
 }
 
 
@@ -358,17 +376,17 @@ static AnnotateDialog *AnnotateDialog_build (Widget parent, void *ptr)
   XtAddCallback (ad->popupWidget, XmNhelpCallback, AnnotateDialog_cb, 0);
 
   ad->baseWidget = XtVaCreateManagedWidget
-    ("baseForm", xmFormWidgetClass, ad->popupWidget, 0);
+    ("baseForm", xmFormWidgetClass, ad->popupWidget, NULL);
 
-  XtVaCreateManagedWidget ("textLabel", xmLabelWidgetClass, ad->baseWidget, 0);
+  XtVaCreateManagedWidget ("textLabel", xmLabelWidgetClass, ad->baseWidget, NULL);
 
-  ad->textWidget = XtVaCreateManagedWidget ("editText", xmTextWidgetClass,ad->baseWidget, 0);
+  ad->textWidget = XtVaCreateManagedWidget ("editText", xmTextWidgetClass,ad->baseWidget, NULL);
 
   return ad;
 }
 
 
-void AnnotateDialog_popup (AnnotationInfo *ai, int newAnnotation)
+void AnnotateDialog_popup (AnnotationInfo *ai, XtPointer newAnnotation)
 {
   Annotation           *annotation;
   AnnotateDialog       *ad = ai->ad;
@@ -405,7 +423,7 @@ void AnnotateDialog_popup (AnnotationInfo *ai, int newAnnotation)
   XtVaSetValues
     (ad->popupWidget,
 	XmNuserData,       (XtPointer)newAnnotation,
-	0);
+	NULL);
 
   /* pop it up! */
   XtManageChild (ad->popupWidget);
@@ -425,16 +443,18 @@ void AnnotateDialog_cb  (Widget w, XtPointer client, XtPointer call)
   Dimension             width;
   Dimension             height;
   Dimension             boxWidth, boxHeight;
-  int                   numLines, len;
-  int                   textWidth, newAnnotation;
+  int                   numLines;
+  intptr_t              len;
+  int                   textWidth;
   char*                 newptr;
   int                   fontHeight;
+  XtPointer             newAnnotation;
 
 
   if (cbs->reason == XmCR_OK)
   {
     /* get newAnnotation flag */
-    XtVaGetValues (w, XmNuserData, &newAnnotation, 0);
+    XtVaGetValues (w, XmNuserData, &newAnnotation, NULL);
 
     /* get annotation text */
     str = XmTextGetString (ai->ad->textWidget);
@@ -449,7 +469,7 @@ void AnnotateDialog_cb  (Widget w, XtPointer client, XtPointer call)
         newptr=strchr(ptr,'\n');
         if (!newptr) newptr=ptr+strlen(ptr);
         else newptr++;
-        len = (int)(newptr - ptr);
+        len = (intptr_t)(newptr - ptr);
         width = XTextWidth( ai->font_info, ptr, len);
         if ( width > textWidth ) textWidth = width;
         ptr = newptr;
@@ -489,8 +509,8 @@ void AnnotateDialog_cb  (Widget w, XtPointer client, XtPointer call)
                   XmNx,&x0,
                   XmNy,&y0,
                   NULL);
-      x0 = x0 +.5*width;
-      y0 = y0 +.5*height;
+      x0 = x0 +(int)(.5*width);
+      y0 = y0 +(int)(.5*height);
 
       /*****************************/
       /*  Need to add arrow code   */
@@ -614,7 +634,7 @@ static Boolean doDragging(XtAppContext appContext, Widget w,
     XSetGraphicsExposures(display,xorGC,False);
     XSetSubwindowMode(display,xorGC,IncludeInferiors);
     XSetFunction(display,xorGC,GXxor);
-    XSetForeground(display,xorGC,~0);
+    XSetForeground(display,xorGC,0);
 
     XtVaGetValues(w,
         XmNwidth,&daWidth,

@@ -448,7 +448,8 @@ Strip   Strip_init      (int    *argc,
   Pixel                 fg, bg;
   SDWindowMenuItem      wm_items[STRIPWINDOW_COUNT];
   cColorManager         scm;
-  int                   i, n;
+  intptr_t              i;
+  int                   n;
   Arg                   args[10];
   Atom                  import_list[10];
   StripConfigMask       scfg_mask;
@@ -669,7 +670,7 @@ Strip   Strip_init      (int    *argc,
      */
 #ifdef USE_CLUES
     hintshell = XtVaCreatePopupShell
-      ("HintShell", xcgLiteClueWidgetClass, si->toplevel, 0);
+      ("HintShell", xcgLiteClueWidgetClass, si->toplevel, NULL);
 #endif
     
     si->shell = XtVaCreatePopupShell
@@ -721,7 +722,7 @@ Strip   Strip_init      (int    *argc,
       (form,
 	  XmNforeground,           &fg,
 	  XmNbackground,           &bg,
-	  0);
+	  NULL);
     
     /* the graph control panel */
     si->graph_panel = XtVaCreateManagedWidget
@@ -1914,7 +1915,7 @@ static void     Strip_graphdrop_handle  (Widget         w,
 
   dpy = XtDisplay (w);
 
-  XtVaGetValues (w, XmNuserData, &si, 0);
+  XtVaGetValues (w, XmNuserData, &si, NULL);
   drop_data = (XmDropProcCallback) call;
   dc = drop_data->dragContext;
 
@@ -3513,7 +3514,7 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
   case POPUPMENU_NEW_ANNOTATION:
 
     /* popup annotation dialog */
-    AnnotateDialog_popup (si->annotation_info, (int)1);
+    AnnotateDialog_popup (si->annotation_info, (XtPointer)1);
     break;
         
   case POPUPMENU_DELETE_ANNOTATION:
@@ -3525,7 +3526,7 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
   case POPUPMENU_EDIT_ANNOTATION:
 
     /* popup annotation dialog */
-    AnnotateDialog_popup (si->annotation_info, (int)0);
+    AnnotateDialog_popup (si->annotation_info, (XtPointer)0);
     break;
         
   case POPUPMENU_PRINT:
@@ -3563,21 +3564,21 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
     if (strcmp (si->print_info.device, "ps") == 0)
 	sprintf
 	  (cmd_buf,
-	    "xwd -id %u | xwdtopnm | pnmtops | lp -d%s -onb",
+	    "xwd -id %u | xwdtopnm | pnmtops | lp -d%s",
 	    (unsigned)XtWindow (si->graph_form),
 	    si->print_info.printer);
     else
 # endif
 	sprintf
 	  (cmd_buf,
-	    "xwd -id %d | xpr -device %s | lp -d%s -onb",
+	    "xwd -id %d | xpr -device %s | lp -d%s",
 	    (int)XtWindow (si->graph_form),
 	    si->print_info.device,
 	    si->print_info.printer);
     if (!(pid = fork ()))
     {
 	/* Child (pid=0) */
-	execl ("/bin/sh", "sh", "-c", cmd_buf, 0);
+	execl ("/bin/sh", "sh", "-c", cmd_buf, NULL);
 	exit (0);
     }
 #endif /* DESY_PRINT */
@@ -3601,7 +3602,7 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
     if (!(pid = fork ()))
     {
 	/* Child (pid=0) */
-	execl ("/bin/sh", "sh", "-c", cmd_buf, 0);
+	execl ("/bin/sh", "sh", "-c", cmd_buf, NULL);
 	exit (0);
     }
 #endif
@@ -3705,7 +3706,7 @@ static void     PrinterDialog_popup     (PrinterDialog *pd, StripInfo *si)
 	&root, &child, &root_x, &root_y, &win_x, &win_y, &mask);
 
   /* place dialog box so it centers the window on the screen */
-  XtVaGetValues (pd->msgbox, XmNwidth, &width, XmNheight, &height, 0);
+  XtVaGetValues (pd->msgbox, XmNwidth, &width, XmNheight, &height, NULL);
 
   win_x = root_x - (width / 2);         if (win_x < 0) win_x = 0;
   win_y = root_y - (height / 2);        if (win_y < 0) win_y = 0;
@@ -3733,7 +3734,7 @@ static void     PrinterDialog_cb        (Widget         w,
 
   if (cbs->reason == XmCR_OK)
   {
-    XtVaGetValues (w, XmNuserData, &si, 0);
+    XtVaGetValues (w, XmNuserData, &si, NULL);
 
     /* get printer name, if not empty string */
     str = XmTextFieldGetString (si->pd->name_textf);
@@ -4226,7 +4227,7 @@ static void radio_toggled(Widget widget,int which,XmToggleButtonCallbackStruct *
   {
     
     radioBoxAlgorithm=which;
-    XtVaGetValues (XtParent(widget), XmNuserData, &si, 0);
+    XtVaGetValues (XtParent(widget), XmNuserData, &si, NULL);
     
     radioChange=1;
     
@@ -4288,7 +4289,7 @@ static void arch_callback(widget, bit, toggle_data)
   StripInfo *si;
   arch_flag=1-arch_flag;
   
-  XtVaGetValues (widget, XmNuserData, &si, 0);
+  XtVaGetValues (widget, XmNuserData, &si, NULL);
   
   radioChange=1;
   Strip_refresh((Strip) si); 
@@ -4321,7 +4322,7 @@ static void historyPoints(widget, textField , call_data)
     return;
   }
   
-  XtVaGetValues (widget, XmNuserData, &si, 0);
+  XtVaGetValues (widget, XmNuserData, &si, NULL);
   historySize=tmp;
   Strip_refresh((Strip) si);
 }

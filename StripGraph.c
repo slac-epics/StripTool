@@ -519,12 +519,12 @@ static void StripGraph_manage_geometry (StripGraphInfo *sgi)
      XjNmaxPos,                 maxpos,
      NULL);
 
+  /* need to catch failure */
+  XSynchronize (sgi->display, True);
+
   /* plot area pixmap and "double buffer" pixmap */
   if (sgi->plotpix) XFreePixmap (sgi->display, sgi->plotpix);
   if (sgi->pixmap) XFreePixmap (sgi->display, sgi->pixmap);
-
-  /* need to catch failure */
-  XSynchronize (sgi->display, True);
 
   Strip_x_error_code = Success;
   sgi->plotpix = XCreatePixmap
@@ -613,8 +613,8 @@ void StripGraph_draw    (StripGraph     the_graph,
     dbl_max = time2dbl (&sgi->t1);
     XtVaSetValues
       (sgi->x_axis,
-	  XjNminVal,       &dbl_min,
-	  XjNmaxVal,       &dbl_max,
+	  XjNpMinVal,      &dbl_min,
+	  XjNpMaxVal,      &dbl_max,
 	  XmNforeground,   sgi->config->Color.foreground.xcolor.pixel,
 	  XjNtextColor,    sgi->config->Color.foreground.xcolor.pixel,
 	  XmNbackground,   sgi->config->Color.background.xcolor.pixel,
@@ -648,13 +648,13 @@ void StripGraph_draw    (StripGraph     the_graph,
       
       XtVaSetValues
         (sgi->y_axis,
-         XjNminVal,     &sgi->selected_curve->details->min,
-         XjNmaxVal,     &sgi->selected_curve->details->max,
+         XjNpMinVal,    &sgi->selected_curve->details->min,
+         XjNpMaxVal,    &sgi->selected_curve->details->max,
          XmNforeground, sgi->config->Color.foreground.xcolor.pixel,
          XmNbackground, sgi->config->Color.background.xcolor.pixel,
          XjNtextColor,  text_color,
          XjNunitString, sgi->selected_curve->details->egu,
-         XjNlogEpsilon, &log_epsilon,
+         XjNpLogEpsilon, &log_epsilon,
          XjNtransform,  transform,
          NULL);
     }
@@ -664,8 +664,8 @@ void StripGraph_draw    (StripGraph     the_graph,
       dbl_max = 1;
       XtVaSetValues
         (sgi->y_axis,
-         XjNminVal,     &dbl_min,
-         XjNmaxVal,     &dbl_max,
+         XjNpMinVal,     &dbl_min,
+         XjNpMaxVal,     &dbl_max,
          XmNforeground, sgi->config->Color.foreground.xcolor.pixel,
          XmNbackground, sgi->config->Color.background.xcolor.pixel,
          XjNtextColor,  text_color,
