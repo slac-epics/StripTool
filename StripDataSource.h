@@ -107,6 +107,7 @@ typedef enum
 typedef enum
 {
   SDS_NUMSAMPLES = 1,   /* (size_t)     number of samples to keep       rw */
+  SDS_BEGIN_TIME = 2,   /* (struct timeval *) */
   SDS_LAST_ATTRIBUTE
 } SDSAttribute;
 
@@ -224,6 +225,14 @@ size_t  StripDataSource_render  (StripDataSource,
  *      the specified file.
  */
 int     StripDataSource_dump            (StripDataSource, FILE *,char *sgi);/* Albert */
+
+/*
+ * StripDataSource_dump_csv
+ *
+ *      Causes all ring buffer data for the current range to be dumped out to
+ *      the specified comma separated values file.
+ */
+int     StripDataSource_dump_csv        (StripDataSource, FILE *,char *sgi);
 
 int   Strip_auto_scale     (Strip the_strip);  /* Albert */
 

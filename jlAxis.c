@@ -236,6 +236,39 @@ static XtResource       resources[] =
     offset (axis.text_color),
     XmRImmediate,
     (XtPointer)XtDefaultForeground
+  }, 
+
+  /* ptr min_val */
+  {
+    XjNpMinVal,
+    XjCPMinVal,
+    XtRPointer,
+    sizeof (double *),
+    offset (axis.pmin_val),
+    XmRImmediate,
+    (double *)0
+  },
+
+  /* ptr max_val */
+  {
+    XjNpMaxVal,
+    XjCPMaxVal,
+    XtRPointer,
+    sizeof (double *),
+    offset (axis.pmax_val),
+    XmRImmediate,
+    (double *)0
+  },
+
+  /* ptr log epsilon */
+  {
+    XjNpLogEpsilon,
+    XjCPLogEpsilon,
+    XtRPointer,
+    sizeof (double *),
+    offset (axis.plog_epsilon),
+    XmRImmediate,
+    (double *)0
   }
 };
 
@@ -634,7 +667,7 @@ Initialize      (Widget         treq,
      XmNtraversalOn,            False,
      XmNshadowThickness,        (Dimension)0,
      XmNhighlightThickness,     (Dimension)0,
-     0);
+     NULL);
 
   nw->axis.pixmap = 0;
   nw->axis.need_refresh = True;
@@ -709,6 +742,17 @@ SetValues       (Widget cur_w,
   AxisWidget    nw = (AxisWidget) new_w;
   Boolean             do_redisplay = False;
   Boolean             do_recompute = False;
+  ArgList       arg;
+  Cardinal      nargs=*num_args;
+
+  for (arg=args; nargs!=0; nargs--,arg++) {
+      if (strcmp(arg->name,XjNpMinVal)==0 && arg->value) 
+           nw->axis.min_val=*(double *)arg->value;
+      if (strcmp(arg->name,XjNpMaxVal)==0 && arg->value) 
+           nw->axis.max_val=*(double *)arg->value;
+      if (strcmp(arg->name,XjNpLogEpsilon)==0 && arg->value) 
+           nw->axis.log_epsilon=*(double *)arg->value;
+  }
 
   /* new text gc? */
   if ((cur->axis.text_color != nw->axis.text_color) ||
@@ -1132,6 +1176,11 @@ Draw            (AxisWidget cw, Drawable canvas)
   int           i, j;
   int           z;
   int           length = 0;
+
+  line.y1=0;
+  line.y2=0;
+  line.x1=0;
+  line.x2=0;
 
   /* clear the drawable */
   XFillRectangle
@@ -1590,7 +1639,7 @@ ComputeTimeTics         (AxisWidget cw)
     if(ptm) cal = *ptm;
 #endif    
 
-    interval = (time_t)m_minor;
+    interval = (int)m_minor;
     switch (best)
     {
     case Seconds:
@@ -1737,7 +1786,7 @@ ComputeTimeTics         (AxisWidget cw)
   else
   {
     find_good_linear_tics (cw, False, a, b, &q, &m_minor, &m_major);
-    interval = (time_t)(m_major * q);
+    interval = (int)(m_major * q);
     if ((cw->axis.value_type != XjAXIS_RELTIME_NUMBERS) && (interval != 1))
       multiplier = &interval;
     
@@ -2943,6 +2992,7 @@ transform_values_normalized     (AxisTransform          transform,
 }
 
 
+#if 0
 static void
 untransform_normalized_values (AxisTransform          transform,
                                AxisValueType          value_type,
@@ -2990,6 +3040,47 @@ untransform_normalized_values (AxisTransform          transform,
       n--; x_in++; x_out++;
     }
 }
+#endif
 
 
+static void
+untransform_normalized_values (AxisTransform          transform,
+                               AxisValueType          value_type,
+                               AxisEndpointPosition   min_pos,
+                               AxisEndpointPosition   max_pos,
+                               register double        min_val,
+                               register double        max_val,
+                               register double        log_epsilon,
+                               register double        log_epsilon_offset,
+                               register double        log_delta,
+                               register double        *x_in,
+                               register double        *x_out,
+                               register int           n)
+{
+  double log_max, log_min;
+  register double       log_x;
+
+  /* linear real values, or time values */
+  if ((transform == XjAXIS_LINEAR) || (value_type != XjAXIS_REAL))
+    while (n > 0)
+    {
+      *x_out = (*x_in * (max_val - min_val)) + min_val;
+      n--; x_in++; x_out++;
+    }
+
+  /* logarithmic real values */
+  else {
+    log_max = (ABS(max_val) <= DBL_EPSILON? log_epsilon : log10 (ABS(max_val)));
+    log_min = (ABS(min_val) <= DBL_EPSILON? log_epsilon : log10 (ABS(min_val)));
+    if (max_val < 0. ) log_max = -log_max;
+    if (min_val < 0. ) log_min = -log_min;
+    while (n > 0)
+    {
+      log_x = *x_in * (log_max - log_min) + log_min;
+      *x_out = pow (10.0 ,ABS(log_x));
+      if ( log_x < 0. ) *x_out = *x_out * -1.0;
+      n--; x_in++; x_out++;
+    }
+  }
+}
 

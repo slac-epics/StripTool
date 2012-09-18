@@ -279,6 +279,7 @@ StripDataSource_getattr (StripDataSource the_sds, ...)
   StripDataSourceInfo   *sds = (StripDataSourceInfo *)the_sds;
   int                   attrib;
   int                   ret_val = 1;
+  size_t                index;
 
   
   va_start (ap, the_sds);
@@ -292,6 +293,13 @@ StripDataSource_getattr (StripDataSource the_sds, ...)
 	case SDS_NUMSAMPLES:
 	  *(va_arg (ap, size_t *)) = sds->buf_size;
 	  break;
+
+	case SDS_BEGIN_TIME:
+	  if (sds->count == sds->buf_size) index = (sds->cur_idx + 1) % sds->buf_size; 
+	  else index = 1;
+	  *(va_arg (ap, struct timeval *)) = sds->times[index];
+	  break;
+
       }
   }
 
@@ -715,7 +723,7 @@ StripDataSource_init_range      (StripDataSource        the_sds,
   CurveData             *cd;
   struct timeval        t1, t_tmp;
   struct timeval        h0, h1, *h_end;
-  long                  r0, r1;
+  long                  r0, r1 = 0;
   int                   have_data = 0;
   int                   i;
 
@@ -1208,6 +1216,9 @@ segmentify      (StripDataSourceInfo    *sds,
   int                   n_processed;
   Boolean               zero_points;
 
+  p1.x=0;
+  p1.y=0;
+
   /* NB: For this algorithm, we'll adopt the convention that
    * the first point in a segment will always hold the min
    * point with respect to x.  So for XSegment s, s.x1 <= s.x2
@@ -1652,8 +1663,8 @@ StripDataSource_dump    (StripDataSource        the_sds,
   memcpy(&StartCopy,&Start,sizeof(struct timeval));
   memcpy(  &EndCopy,&End,  sizeof(struct timeval));
 
-  if(DEBUG1)printf("Start=%s",ctime(&(Start.tv_sec)));
-  if(DEBUG1)printf("End=%s",ctime(&(End.tv_sec)));
+  if(DEBUG1)printf("Start=%s",ctime((const time_t *)&(Start.tv_sec)));
+  if(DEBUG1)printf("End=%s",ctime((const time_t *)&(End.tv_sec)));
 
   if(!cursor) cursor = XCreateFontCursor(XtDisplay(history_topShell),XC_watch);
   XDefineCursor(XtDisplay(history_topShell),
@@ -1693,7 +1704,7 @@ StripDataSource_dump    (StripDataSource        the_sds,
     /* (b-1) */
     memset(buf,0,SDS_DUMP_FIELDWIDTH+1);
     strftime(buf, SDS_DUMP_FIELDWIDTH, "%m/%d/%Y %H:%M:%S",
-	localtime (&(timeP->tv_sec)));
+	localtime ((const time_t *)&(timeP->tv_sec)));
     fprintf (outfile, "%s.%06d\t",buf,(int)timeP->tv_usec);
       
     /* (b-2) */
@@ -1704,6 +1715,140 @@ StripDataSource_dump    (StripDataSource        the_sds,
 	  memset(buf,0,SDS_DUMP_FIELDWIDTH+1);
 	  printData(timeP,cd,buf);
 	  fprintf (outfile, "%s\t",buf);
+	}
+      
+    /* finally, the end-line */
+    fprintf (outfile, "\n");
+  } /* end of history while() handeling */
+
+  
+  if(DEBUG1)printf("Start=%s",ctime((const time_t *)&(Start.tv_sec)));
+  if(DEBUG1)printf("End=%s",ctime((const time_t *)&(End.tv_sec)));
+
+  if (sds->idx_t0 != sds->idx_t1) 
+  {
+    for (i = sds->idx_t0; i != sds->idx_t1; i = (i+1) % sds->buf_size)
+    {
+	if(compare_times(&(sds->times[i]),&End)>0) 
+	{if(DEBUG1)printf("T[%d]>End   break\n",i); break;}
+	if(compare_times(&(sds->times[i]),&Start)<0) 
+	{if(DEBUG1)
+	  printf("Start > T[%d]=%s",i,ctime((const time_t *)&(sds->times[i].tv_sec))); 
+	continue;}
+	if(DEBUG1)printf("Good i=%d\n",i);
+	
+	/* (b-1) */
+	memset(buf,0,SDS_DUMP_FIELDWIDTH+1);
+	strftime(buf, SDS_DUMP_FIELDWIDTH, "%m/%d/%Y %H:%M:%S",
+	  localtime ((const time_t *)&(sds->times[i].tv_sec)));
+	fprintf (outfile, "%s.%06d\t",buf,(int)sds->times[i].tv_usec); 
+	/* (b-2) */
+	for (j = 0; j < STRIP_MAX_CURVES; j++)
+	  if (sds->buffers[j].curve)
+	  {
+	    if (sds->buffers[j].stat[i] & DATASTAT_PLOTABLE)
+		fprintf (outfile, "%g\t",sds->buffers[j].val[i]);
+	    else fprintf (outfile, "%s\t",SDS_DUMP_BADVALUESTR);
+	  }
+	
+	/* finally, the end-line */
+	fprintf (outfile, "\n");
+    }
+  } else {if(DEBUG1) perror("DUMP:NO CURRENT DATA");}
+
+
+  if(DEBUG1)printf("Last i=%d\n",i);
+
+  fflush (outfile);
+  XUndefineCursor(XtDisplay(history_topShell),
+    XtWindow(history_topShell));
+  return 1;
+}
+
+
+/*
+ * StripDataSource_dump_csv
+ */
+int
+StripDataSource_dump_csv    (StripDataSource        the_sds,
+  FILE                   *outfile,char * cgi)
+{
+  StripDataSourceInfo   *sds = (StripDataSourceInfo *)the_sds;
+  char                  buf[SDS_DUMP_FIELDWIDTH+1];
+  int                   i, j;
+  struct timeval Start,End;
+  struct timeval StartCopy,EndCopy;
+  CurveData *cd;
+
+  struct timeval *timeP=0;
+  StripGraph sg = (StripGraph) cgi;
+
+  /* if range is not initialized, return failure 
+     if (sds->idx_t0 == sds->idx_t1) return 0; */
+
+  /* if no curves, return failure */
+  for (i = 0; i < STRIP_MAX_CURVES; i++) if (sds->buffers[i].curve) break;
+  if (i >= STRIP_MAX_CURVES) { if(DEBUG1)perror("No one curvers");return 0; }
+
+  StripGraph_getattr (sg, STRIPGRAPH_BEGIN_TIME, &Start, 0);
+  StripGraph_getattr (sg, STRIPGRAPH_END_TIME,   &End,   0);
+
+  memcpy(&StartCopy,&Start,sizeof(struct timeval));
+  memcpy(  &EndCopy,&End,  sizeof(struct timeval));
+
+  if(DEBUG1)printf("Start=%s",ctime(&(Start.tv_sec)));
+  if(DEBUG1)printf("End=%s",ctime(&(End.tv_sec)));
+
+  if(!cursor) cursor = XCreateFontCursor(XtDisplay(history_topShell),XC_watch);
+  XDefineCursor(XtDisplay(history_topShell),
+    XtWindow(history_topShell), cursor);
+  XFlush(XtDisplay(history_topShell));
+
+  for (i = 0; i < STRIP_MAX_CURVES; i++) {
+    if (!sds->buffers[i].curve) continue; 
+    cd = &sds->buffers[i];
+    StripHistory_fetch
+      (sds->history, cd->curve->details->name, &StartCopy, &EndCopy,
+	  &cd->history, 0, 0);
+  }
+
+  /* this is very straightforward:
+   * (a) for every curve, print out its name across the top
+   * (b) for every time on the range
+   *     (1) print out the time
+   *     (2) for every curve, print out its value
+   */
+
+  /* (a) */
+  /* (a) */
+  fprintf (outfile, "%s", "Time");
+  for (i = 0; i < STRIP_MAX_CURVES; i++)
+    if (sds->buffers[i].curve) fprintf(outfile, ",%s [%s]", 
+	sds->buffers[i].curve->details->name,sds->buffers[i].curve->details->egu);
+  fprintf (outfile, "\n");
+  
+  /* (b) */
+  timeP=&StartCopy;
+
+  while(findNextTime(timeP,timeP,sds) ==0) 
+  {
+    if(compare_times(timeP,&Start)<0) continue;
+    if(compare_times(timeP,&End)>0) break;
+
+    /* (b-1) */
+    memset(buf,0,SDS_DUMP_FIELDWIDTH+1);
+    strftime(buf, SDS_DUMP_FIELDWIDTH, "%m/%d/%Y,%H:%M:%S",
+	localtime (&(timeP->tv_sec)));
+    fprintf (outfile, "%s.%06d",buf,(int)timeP->tv_usec);
+      
+    /* (b-2) */
+    for (j = 0; j < STRIP_MAX_CURVES; j++)
+	if (sds->buffers[j].curve)
+	{
+	  cd = &sds->buffers[j];
+	  memset(buf,0,SDS_DUMP_FIELDWIDTH+1);
+	  printData(timeP,cd,buf);
+	  fprintf (outfile, ",%s",buf);
 	}
       
     /* finally, the end-line */
@@ -1730,14 +1875,14 @@ StripDataSource_dump    (StripDataSource        the_sds,
 	memset(buf,0,SDS_DUMP_FIELDWIDTH+1);
 	strftime(buf, SDS_DUMP_FIELDWIDTH, "%m/%d/%Y %H:%M:%S",
 	  localtime (&(sds->times[i].tv_sec)));
-	fprintf (outfile, "%s.%06d\t",buf,(int)sds->times[i].tv_usec); 
+	fprintf (outfile, "%s.%06d",buf,(int)sds->times[i].tv_usec); 
 	/* (b-2) */
 	for (j = 0; j < STRIP_MAX_CURVES; j++)
 	  if (sds->buffers[j].curve)
 	  {
 	    if (sds->buffers[j].stat[i] & DATASTAT_PLOTABLE)
-		fprintf (outfile, "%g\t",sds->buffers[j].val[i]);
-	    else fprintf (outfile, "%s\t",SDS_DUMP_BADVALUESTR);
+		fprintf (outfile, ",%g",sds->buffers[j].val[i]);
+	    else fprintf (outfile, ",%s",SDS_DUMP_BADVALUESTR);
 	  }
 	
 	/* finally, the end-line */
@@ -1753,7 +1898,6 @@ StripDataSource_dump    (StripDataSource        the_sds,
     XtWindow(history_topShell));
   return 1;
 }
-
 
 
 /* ====== Static Functions ====== */

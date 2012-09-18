@@ -109,7 +109,7 @@ char    *time2str (struct timeval *t)
 {
   static char buf[512];
 
-  sprintf (buf, "sec:\t %lu\nusec:\t %ld", t->tv_sec, t->tv_usec);
+  sprintf (buf, "sec:\t %lu\nusec:\t %ld", t->tv_sec, (long)t->tv_usec);
   return buf;
 }
 
@@ -414,7 +414,9 @@ void    MessageBox_popup        (Widget         parent,
 
   XtVaSetValues
     (*message_box,
+#ifndef WIN32
      XmNdialogType,             type,
+#endif
      XmNdefaultButtonType,      XmDIALOG_OK_BUTTON,
      XmNnoResize,               True,
      XmNdefaultPosition,        False,
@@ -509,7 +511,11 @@ int Question_popup(XtAppContext app, Widget wparent, char * question)
     yes = XmStringCreateLocalized("Yes");
     no = XmStringCreateLocalized("No");
     cancel = XmStringCreateLocalized("Cancel");
+#ifndef WIN32
     wdialog = XmCreateQuestionDialog(wparent, "yesNo", NULL, 0);
+#else
+    wdialog = XmCreateMessageDialog(wparent, "yesNo", NULL, 0);
+#endif
     XtVaSetValues(wdialog,
 	XmNokLabelString,     yes,
 	XmNcancelLabelString, no,
@@ -598,7 +604,11 @@ void History_MessageBox_popup(char *title,char *btn_txt,char *str)
           MessageBox_popup
             (history_topShell,
              (Widget *)XmCreateMessageDialog(history_topShell,"Oops",NULL,0), 
+#ifndef WIN32
              XmDIALOG_WARNING,title,btn_txt,str);
+#else
+             XmDIALOG_MESSAGE,title,btn_txt,str);
+#endif
 }
 
 
@@ -631,7 +641,7 @@ void print(const char *fmt, ...)
 char *timeStamp(void)
 {
   static char timeStampStr[16];
-  long now;
+  time_t now;
   struct tm *tblock;
   
   time(&now);

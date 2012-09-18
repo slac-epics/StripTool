@@ -227,3 +227,49 @@ size is never reduced.
 
 Mon Jan 31, 2005 - StripTool-2-5-9-0 - evans
 Fixed bug in writing tv_usec part of the time in StripDataSource_dump.
+
+Mon Nov 14, 2005 - StripTool-2-5-10-0 - evans
+Changed u_long to unsigned long for gcc 4.0.  Changed 0 to NULL in
+variable-argument X functions to avoid 64-bit problems (as contributed
+by Ernest Williams).
+
+Fri Jan 26 16:27:17 CST 2007  -   StripTool-2-5-11-0
+   Added curve annotations facility.
+
+Thu Mar  8 12:38:17 CST 2007  -   StripTool-2-5-11-1
+   Allow annotate dialog popup to stay placed where user puts it.
+   Bug fix for calculation of annotation raster y value.
+   Minor annotation code cleanUp. Added code to delete annotations at exit.
+
+Thu Jun 21 16:45:07 CDT 2007 - StripTool-2-5-11-2
+   Fixed annotation y values and cursor y values when log10 is selected.
+
+Thu Jun 21 16:45:07 CDT 2007 - StripTool-2-5-12-0
+   Converted to R3.14 Makefiles.
+
+Mon Oct 15 10:14:27 CDT 2007
+   Added "Make a Log Entry" feature from Nerses Gevorgyan (nerses@jlab.org)
+
+Fri Nov  9 14:45:21 CST 2007
+   Added annotation information to the StripTool User's Guide html file.
+   Added note in User's Guide about configuring StripTool by uncommenting 
+   USE_SDDS=NO in Makefile.
+
+Thu Dec 20 13:00:43 CST 2007 = StripTool-2-5-12-1
+   Added code to delete an annotation if it's location is out of source 
+   data range and out of plot range by at least one plot width.
+   Updated the documentation html file.
+
+Thu May 20 10:42:35 CDT 2010 - StripTool-2-5-13-0
+   Portability code changes for 64 bit builds.
+
+Mon Jul 18 13:27:16 CDT 2011 - StripTool-2-5-14-0
+   Fixed core dump after dumpdata problem.
+   Added code for dumpdata to a comma separated values (csv) file.
+
+Mon Aug  8 12:44:09 CDT 2011 - StripTool-2-5-14-1
+   More portability code changes.
+
+Thu Jun 21 14:46:11 CDT 2012 - StripTool-2-5-15-0
+   Modified to work with Xming X server.
+
