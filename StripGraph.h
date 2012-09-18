@@ -14,6 +14,7 @@
 
 #include "StripConfig.h"
 #include "StripDataSource.h"
+#include "jlAxis.h"
 
 
 
@@ -71,6 +72,8 @@ typedef enum
   STRIPGRAPH_BEGIN_TIME,        /* (struct timeval *)                   rw */
   STRIPGRAPH_END_TIME,          /* (struct timeval *)                   rw */
   STRIPGRAPH_USER_DATA,         /* (void *)  miscellaneous client data  rw */
+  STRIPGRAPH_ANNOTATION_INFO,   /* (void *)  miscellaneous client data  rw */
+  STRIPGRAPH_SELECTED_CURVE,    /* (StripCurveInfo *)                   rw */
   STRIPGRAPH_LAST_ATTRIBUTE
 } StripGraphAttribute;
 
@@ -143,6 +146,15 @@ void    StripGraph_draw         (StripGraph,
 int     StripGraph_dumpdata     (StripGraph, FILE *);
 
 
+/*
+ * StripGraph_dumpdata_csv
+ *
+ *      Causes all data for the curves on the current time range, to be
+ *      dumped out to the specified comma separated values file.
+ */
+int     StripGraph_dumpdata_csv     (StripGraph, FILE *);
+
+
 #ifdef USE_SDDS
 /*
  * StripGraph_dumpdata_sdds
@@ -168,3 +180,6 @@ unsigned        StripGraph_clearstat    (StripGraph, unsigned);
 int StripAuto_min_max (StripDataSource sds, char *sgi) ; /* Albert */
 void CurveLegendRefresh(StripCurveInfo *c, StripGraph sg, double a);  /* Albert */
 #endif
+
+
+jlaTransformInfo* StripGraph_getTransform(StripGraph sgi, StripCurveInfo *curve);

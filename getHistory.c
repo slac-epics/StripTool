@@ -23,17 +23,17 @@
 #define DEBUG1 0
 #define DEBUG2 0
 
-u_long getHistory(StripHistory     the_shi,
+unsigned long getHistory(StripHistory     the_shi,
 		  char*            name,
 		  struct timeval*  begin,
 		  struct timeval*  end,
 		  struct timeval** times,
 		  short**          status,
 		  double**         data,
-		  u_long *         count)
+		  unsigned long *  count)
 {
   struct timeval right_endpoint;   /* right end for AAPI request */
-  u_long commonCount=0;
+  unsigned long commonCount=0;
   int i;
 
   double *returnedDataIOC =NULL;
@@ -155,10 +155,10 @@ if(DEBUG1) printf("history req is here\n");
 
   if(DEBUG1) {
     printf("commonCount=%ld\n",commonCount);
-    printf("COM FROM=%s",ctime(&(begin->tv_sec)));
-    printf("COM TO  =%s",ctime(&(end->tv_sec)));    
+    printf("COM FROM=%s",ctime((const time_t *)&(begin->tv_sec)));
+    printf("COM TO  =%s",ctime((const time_t *)&(end->tv_sec)));    
     if(DEBUG2) for(i=0;i<(int)commonCount;i++)  
-      printf("TIME=%s",ctime(&((*times)[i].tv_sec)));
+      printf("TIME=%s",ctime((const time_t *)&((*times)[i].tv_sec)));
   }
   
   if (returnedDataAAPI)   free (returnedDataAAPI);
