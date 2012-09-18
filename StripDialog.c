@@ -20,6 +20,12 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#if !defined(_MSC_VER)
+#include <inttypes.h>
+#else
+#define PRIiPTR "i"
+#endif
+
 
 #ifdef USE_XMU
 #  include <X11/Xmu/Editres.h>
@@ -388,16 +394,13 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
   Widget                leftmost_col, rightmost_col;
   Widget                sep;
   Widget                menu, tabs;
-  int                   i, j;
+  intptr_t              i, j;
   Dimension             dim1, dim2;
   Dimension             widths[SDCURVE_LAST_ATTRIBUTE];
   Dimension             row_height;
   StripConfigMask       scfg_mask;
   Atom                  WM_DELETE_WINDOW;
   Arg                   args[5];
-  /* SLAC RonC addition here: ---- */
-  char                  *temp_str;
-  /* ----------------------------- */
 
   if ((sd = (StripDialogInfo *)malloc (sizeof (StripDialogInfo))) != NULL)
   {
@@ -471,12 +474,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
        XmNuserData,                     sd,
        XmNfileTypeMask,         XmFILE_REGULAR,
        NULL);
-    /* SLAC RonC Change 8/2002 */
-    /* xstr = XmStringCreateLocalized (STRIP_CONFIGFILE_DIR); */
-    temp_str = getenv("STRIP_CONFIGFILE_DIR");
-    if(!temp_str) temp_str = STRIP_CONFIGFILE_DIR;
-       xstr = XmStringCreateLocalized (temp_str);
-    /* End of Ronc Change */
+    xstr = XmStringCreateLocalized (STRIP_CONFIGFILE_DIR);
     XtVaSetValues (sd->fs.dlg, XmNdirectory, xstr, NULL);
     XmStringFree (xstr);
     xstr = XmStringCreateLocalized (STRIP_CONFIGFILE_PATTERN);
@@ -602,7 +600,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
        NULL);
     for (i = 0; i < MAX_WINDOW_MENU_ITEMS; i++)
     {
-      sprintf (char_buf, "window%dPushB", i);
+      sprintf (char_buf, "window%"PRIiPTR"PushB", i);
       sd->window_menu_info.items[i].entry = w = XtVaCreateManagedWidget
         (char_buf,
          xmPushButtonGadgetClass,   sd->window_menu_info.menu,
@@ -630,7 +628,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
       ("webHelpPushB",
        xmPushButtonGadgetClass,         w,
        XmNuserData,                     sd,
-       0);
+       NULL);
     XtAddCallback
       (tmp, XmNactivateCallback, helpmenu_cb, (XtPointer)HELP_WEBHELP);
     
@@ -639,7 +637,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
       ("helpOnHelpPushB",
        xmPushButtonGadgetClass,         w,
        XmNuserData,                     sd,
-       0);
+       NULL);
     XtAddCallback
       (tmp, XmNactivateCallback, helpmenu_cb, (XtPointer)HELP_HELPHELP);
     
@@ -648,7 +646,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
       ("aboutPushB",
        xmPushButtonGadgetClass,         w,
        XmNuserData,                     sd,
-       0);
+       NULL);
     XtAddCallback
       (tmp, XmNactivateCallback, helpmenu_cb, (XtPointer)HELP_ABOUT);
       
@@ -668,19 +666,19 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
        XmNrightAttachment,              XmATTACH_FORM,
        XmNrightOffset,                  DEF_WOFFSET,
        XmNbottomAttachment,             XmATTACH_NONE,
-       0);
+       NULL);
     
     XtVaCreateManagedWidget("connectLabel",
 	xmLabelWidgetClass,               rowcol,
-	0);
+	NULL);
     sd->connect_txt = XtVaCreateManagedWidget ("connectText",
 	xmTextWidgetClass,                rowcol,
-	0);
+	NULL);
     XtAddCallback (sd->connect_txt, XmNactivateCallback, connect_btn_cb, sd);
     XtAddCallback (sd->connect_txt, XmNfocusCallback, text_focus_cb, 0);
     btn = XtVaCreateManagedWidget  ("connectButton",
 	xmPushButtonWidgetClass,          rowcol,
-	0);
+	NULL);
     XtAddCallback (btn, XmNactivateCallback, connect_btn_cb, sd);
 
     /* make some nice tabs */
@@ -695,7 +693,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
        XmNleftAttachment,               XmATTACH_FORM,
        XmNrightAttachment,              XmATTACH_FORM,
        XmNbottomAttachment,             XmATTACH_NONE,
-       0);
+       NULL);
     XtAddCallback (tabs, XgNactivateCallback, tabs_cb, sd);
 
     /* create the curve area form and controls */
@@ -714,7 +712,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
        XmNrightOffset,                  DEF_WOFFSET,
        XmNbottomAttachment,             XmATTACH_FORM,
        XmNbottomOffset,                 DEF_WOFFSET,
-       0);
+       NULL);
     
     curve_column_lbl[i = SDCURVE_NAME] = XtVaCreateManagedWidget
       (SDCurveAttributeWidgetName[SDCURVE_NAME],
@@ -996,7 +994,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
        XmNleftOffset,                   DEF_WOFFSET,
        XmNrightAttachment,              XmATTACH_NONE,
        XmNbottomAttachment,             XmATTACH_NONE,
-       0);
+       NULL);
 
     /* create the time control area */
     frame = XtVaCreateManagedWidget
@@ -1417,9 +1415,9 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
     
     for (i = 0; i < STRIPGRID_NUM_TYPES; i++)
     {
-      sprintf (char_buf, "option%dPushBG", i);
+      sprintf (char_buf, "option%"PRIiPTR"PushBG", i);
       sd->graph_info.xgrid[i] = XtVaCreateManagedWidget
-        (char_buf, xmPushButtonGadgetClass, pulldown, 0);
+        (char_buf, xmPushButtonGadgetClass, pulldown, NULL);
       XtAddCallback
         (sd->graph_info.xgrid[i], XmNactivateCallback, bogus_cb, (XtPointer)i);
     }
@@ -1451,9 +1449,9 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
     XtAddCallback (pulldown, XmNentryCallback, gropt_ygrid_cb, sd);
     for (i = 0; i < STRIPGRID_NUM_TYPES; i++)
     {
-      sprintf (char_buf, "option%dPushBG", i);
+      sprintf (char_buf, "option%"PRIiPTR"PushBG", i);
       sd->graph_info.ygrid[i] = XtVaCreateManagedWidget
-        (char_buf, xmPushButtonGadgetClass, pulldown, 0);
+        (char_buf, xmPushButtonGadgetClass, pulldown, NULL);
       XtAddCallback
         (sd->graph_info.ygrid[i], XmNactivateCallback, bogus_cb, (XtPointer)i);
     }
@@ -2134,7 +2132,7 @@ static void     setwidgetval_plotstat   (StripDialogInfo        *sd,
                                          int                    stat)
 {
   XtVaSetValues
-    (sd->curve_info[which].widgets[SDCURVE_PLOTSTAT], XmNset, stat, 0);
+    (sd->curve_info[which].widgets[SDCURVE_PLOTSTAT], XmNset, stat, NULL);
 }
 
 
@@ -2148,7 +2146,7 @@ static void     setwidgetval_scale      (StripDialogInfo        *sd,
   XtVaSetValues
     (sd->curve_info[which].widgets[SDCURVE_SCALE],
      XmNset,    (Boolean)(scale == STRIPSCALE_LOG_10),
-     0);
+     NULL);
 }
 
 
@@ -2523,7 +2521,7 @@ static void     setwidgetval_gr_fg              (StripDialogInfo *sd,
                                                  Pixel           pixel)
 {
   XtVaSetValues
-    (sd->graph_info.widgets[SDGROPT_FG], XmNbackground, pixel, 0);
+    (sd->graph_info.widgets[SDGROPT_FG], XmNbackground, pixel, NULL);
 }
 
 
@@ -2531,7 +2529,7 @@ static void     setwidgetval_gr_bg              (StripDialogInfo *sd,
                                                  Pixel           pixel)
 {
   XtVaSetValues
-    (sd->graph_info.widgets[SDGROPT_BG], XmNbackground, pixel, 0);
+    (sd->graph_info.widgets[SDGROPT_BG], XmNbackground, pixel, NULL);
 }
 
 
@@ -2539,7 +2537,7 @@ static void     setwidgetval_gr_gridclr         (StripDialogInfo *sd,
                                                  Pixel           pixel)
 {
   XtVaSetValues
-    (sd->graph_info.widgets[SDGROPT_GRIDCLR], XmNbackground, pixel, 0);
+    (sd->graph_info.widgets[SDGROPT_GRIDCLR], XmNbackground, pixel, NULL);
 }
 
 
@@ -2559,7 +2557,7 @@ static void     setwidgetval_gr_gridx           (StripDialogInfo        *sd,
   XtVaSetValues
     (sd->graph_info.widgets[SDGROPT_GRIDX],
      XmNmenuHistory,    sd->graph_info.xgrid[idx],
-     0);
+     NULL);
 }
 
 
@@ -2569,7 +2567,7 @@ static void     setwidgetval_gr_gridy           (StripDialogInfo        *sd,
   XtVaSetValues
     (sd->graph_info.widgets[SDGROPT_GRIDY],
      XmNmenuHistory,    sd->graph_info.ygrid[idx],
-     0);
+     NULL);
 }
 
 
@@ -2656,7 +2654,7 @@ static void     color_btn_cb    (Widget w, XtPointer data, XtPointer BOGUS(1))
   StripDialogInfo       *sd;
   StripCurveInfo        *sc;
   cColor                *pcolor;
-  int                   which = (int)data;
+  intptr_t              which = (intptr_t)data;
   int                   i;
 
   XtVaGetValues (w, XmNuserData, &sd, NULL);
@@ -2681,7 +2679,7 @@ static void     modify_btn_cb   (Widget w, XtPointer data, XtPointer BOGUS(1))
   StripDialogInfo       *sd;
   StripCurveInfo        *sc;
   StripConfigMask       mask;
-  int                   which = (int)data;
+  intptr_t              which = (intptr_t)data;
   int                   ival;
   double                a, b, tmp;
 
@@ -2747,7 +2745,7 @@ static void     plotstat_tgl_cb (Widget w, XtPointer data, XtPointer call)
   XmToggleButtonCallbackStruct  *cbs = (XmToggleButtonCallbackStruct *)call;
   StripDialogInfo               *sd;
   StripCurve                    *sc;
-  int                           idx = (int)data;
+  intptr_t                     idx = (intptr_t)data;
   StripConfigMask               mask;
 
   XtVaGetValues (w, XmNuserData, &sd, NULL);
@@ -2766,7 +2764,7 @@ static void     scale_tgl_cb    (Widget w, XtPointer data, XtPointer call)
   XmToggleButtonCallbackStruct  *cbs = (XmToggleButtonCallbackStruct *)call;
   StripDialogInfo               *sd;
   StripCurve                    *sc;
-  int                           idx = (int)data;
+  intptr_t                      idx = (intptr_t)data;
   StripConfigMask               mask;
 
   XtVaGetValues (w, XmNuserData, &sd, NULL);
@@ -2793,7 +2791,7 @@ static void     remove_btn_cb   (Widget w, XtPointer data, XtPointer BOGUS(1))
 {
   StripDialogInfo       *sd;
   StripCurve            sc;
-  int                   idx = (int)data;
+  intptr_t              idx = (intptr_t)data;
   
   XtVaGetValues (w, XmNuserData, &sd, NULL);
   sc = sd->curve_info[idx].curve;
@@ -2957,7 +2955,7 @@ static void      gropt_xgrid_cb  (Widget w, XtPointer data, XtPointer call)
   StripConfigMask              mask;
 
   if (StripConfig_setattr
-      (sd->config, STRIPCONFIG_OPTION_GRID_XON, (int)cbs->data, 0))
+      (sd->config, STRIPCONFIG_OPTION_GRID_XON, (intptr_t)cbs->data, 0))
   {
     StripConfigMask_clear (&mask);
     StripConfigMask_set (&mask, SCFGMASK_OPTION_GRID_XON);
@@ -2974,7 +2972,7 @@ static void      gropt_ygrid_cb  (Widget w, XtPointer data, XtPointer call)
   StripConfigMask              mask;
 
   if (StripConfig_setattr
-      (sd->config, STRIPCONFIG_OPTION_GRID_YON, (int)cbs->data, 0))
+      (sd->config, STRIPCONFIG_OPTION_GRID_YON, (intptr_t)cbs->data, 0))
   {
     StripConfigMask_clear (&mask);
     StripConfigMask_set (&mask, SCFGMASK_OPTION_GRID_YON);
@@ -3028,7 +3026,7 @@ static void     filemenu_cb     (Widget w, XtPointer data, XtPointer BOGUS(1))
 {
   StripDialogInfo       *sd;
   int                   i;
-  int                   which = (int)data;
+  intptr_t              which = (intptr_t)data;
 
   XtVaGetValues (w, XmNuserData, &sd, NULL);
 
@@ -3057,7 +3055,7 @@ static void     filemenu_cb     (Widget w, XtPointer data, XtPointer BOGUS(1))
 static void     windowmenu_cb   (Widget w, XtPointer data, XtPointer BOGUS(1))
 {
   StripDialogInfo       *sd;
-  int                   i = (int)data;
+  intptr_t              i = (intptr_t)data;
 
   XtVaGetValues (w, XmNuserData, &sd, NULL);
   sd->window_menu_info.items[i].info.cb_func
@@ -3069,7 +3067,7 @@ static void     windowmenu_cb   (Widget w, XtPointer data, XtPointer BOGUS(1))
 static void helpmenu_cb (Widget w, XtPointer data, XtPointer BOGUS(1))
 {		
   StripDialogInfo       *sd;
-  int                   i = (int)data;
+  intptr_t              i = (intptr_t)data;
 
   XtVaGetValues (w, XmNuserData, &sd, NULL);
   switch(i)
@@ -3152,7 +3150,7 @@ static void     ctrl_btn_cb     (Widget w, XtPointer data, XtPointer BOGUS(1))
   StripDialogInfo       *sd;
   StripDialogCallback   which = (StripDialogCallback)data;
 
-  XtVaGetValues (w, XmNuserData, &sd, 0);
+  XtVaGetValues (w, XmNuserData, &sd, NULL);
   if (sd->callback[which].func)
     sd->callback[which].func (sd->callback[which].data, 0);
 }
@@ -3186,13 +3184,13 @@ static void     fsdlg_cb        (Widget w, XtPointer data, XtPointer call)
 {
   XmFileSelectionBoxCallbackStruct      *cbs;
   StripDialogInfo                       *sd;
-  int                                   mode = (int)data;
+  intptr_t                              mode = (intptr_t)data;
   char                                  *fname;
   int                                   i;
 
   XtUnmanageChild (w);
   cbs = (XmFileSelectionBoxCallbackStruct *)call;
-  XtVaGetValues (w, XmNuserData, &sd, 0);
+  XtVaGetValues (w, XmNuserData, &sd, NULL);
 
   if (mode == FSDLG_OK)
   {
