@@ -715,7 +715,7 @@ static Boolean doDragging(XtAppContext appContext, Widget w,
 	    Modifiers modifiers;
 	    KeySym keysym;
 
-	    XtTranslateKeycode(display, kevent->keycode, (Modifiers)NULL,
+	    XtTranslateKeycode(display, kevent->keycode, (Modifiers) 0,
 	      &modifiers, &keysym);
 #if DEBUG_EVENTS > 1
 	    print("doDragging: Type: %d Keysym: %x (osfXK_Cancel=%x) "

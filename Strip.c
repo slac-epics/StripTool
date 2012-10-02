@@ -3075,7 +3075,7 @@ static void     callback        (Widget w, XtPointer client, XtPointer call)
 
             statusChanged = False;
             /* if not paused, pause the graph by putting it in browse mode */
-            if (!si->status & STRIPSTAT_BROWSE_MODE) {
+            if ( !(si->status & STRIPSTAT_BROWSE_MODE) ) {
               statusChanged = True;
               Strip_setbrowsemode (si, True);
             }
