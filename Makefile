@@ -205,7 +205,11 @@ USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC) -I$(XMU_INC) -I$(XPM_INC)
 # Preprocessor Flags
 # ==========================================================================
 ifneq ($(STRIP_CONFIGFILE_DIR),)
-  USR_CPPFLAGS 	+= -DSTRIP_CONFIGFILE_DIR=$(STRIP_CONFIGFILE_DIR)
+  # Strip off any quotes in the env var so we can add them back consistently
+  # whether the env value is quoted or not.
+  STRIP_CONFIGFILE_DIR := $(patsubst \"%\",%,$(STRIP_CONFIGFILE_DIR))
+  STRIP_CONFIGFILE_DIR := $(patsubst "%",%,$(STRIP_CONFIGFILE_DIR))
+  USR_CPPFLAGS  += -DSTRIP_CONFIGFILE_DIR=\"$(STRIP_CONFIGFILE_DIR)\"
 endif
 
 USR_CPPFLAGS 	+= -DUSE_MOTIF
