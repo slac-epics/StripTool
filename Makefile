@@ -36,7 +36,7 @@
 #     IOC-cache.
 # 
 
-TOP=../..
+TOP=.
 include $(TOP)/configure/CONFIG
 
 # ==========================================================================
@@ -331,6 +331,7 @@ PROD_HOST := StripTool
 # Rules
 # ==========================================================================
 include $(TOP)/configure/RULES
+include $(TOP)/configure/RULES_TOP
 
 
 ../main_+.cc: main_c.c
