@@ -474,7 +474,11 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
        XmNuserData,                     sd,
        XmNfileTypeMask,         XmFILE_REGULAR,
        NULL);
-    xstr = XmStringCreateLocalized (STRIP_CONFIGFILE_DIR);
+    temp_str = getenv("STRIP_CONFIGFILE_DIR");
+    if (!temp_str) {
+        temp_str = STRIP_CONFIGFILE_DIR;
+    }
+    xstr = XmStringCreateLocalized (temp_str);
     XtVaSetValues (sd->fs.dlg, XmNdirectory, xstr, NULL);
     XmStringFree (xstr);
     xstr = XmStringCreateLocalized (STRIP_CONFIGFILE_PATTERN);
