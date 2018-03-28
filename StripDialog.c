@@ -401,6 +401,7 @@ StripDialog     StripDialog_init        (Widget parent, StripConfig *cfg)
   StripConfigMask       scfg_mask;
   Atom                  WM_DELETE_WINDOW;
   Arg                   args[5];
+  char                  *temp_str;
 
   if ((sd = (StripDialogInfo *)malloc (sizeof (StripDialogInfo))) != NULL)
   {
