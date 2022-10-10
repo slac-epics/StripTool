@@ -1,0 +1,6 @@
+Release R2.5.18.0-1.0.0 (October 10th, 2022)
+
+A user reported that when printing an image of a chart to an elog, that image would always show up in black and white even if the original was in color, and often the orientation would be off as well. See CATER #147920 for more information.
+To fix, this changes the code to always use xwdtopnm and pnmtops instead of xpr. xpr did not support printing of color images, and the layout was often thrown off by using the longest side of the image instead of what the user sees.
+View the manual page for xpr for more details.
+Now the image printed should always match what the user sees.
