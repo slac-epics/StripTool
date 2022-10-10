@@ -3564,7 +3564,6 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
 	  "where you can use Paint or another program to\n"
 	  "display or print it.");
 #else /* DESY_PRINT */
-# if defined(SOLARIS)
     if (strcmp (si->print_info.device, "ps") == 0)
 	sprintf
 	  (cmd_buf,
@@ -3572,7 +3571,6 @@ static void     PopupMenu_cb    (Widget w, XtPointer client, XtPointer BOGUS(1))
 	    (unsigned)XtWindow (si->graph_form),
 	    si->print_info.printer);
     else
-# endif
 	sprintf
 	  (cmd_buf,
 	    "xwd -id %d | xpr -device %s | lp -d%s",
