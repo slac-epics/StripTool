@@ -1,3 +1,15 @@
+Release R2.5.18.0-2.0.0 (August 8th, 2023)
+
+Program would crash(segfault) if you had a single connected signal. See CATER #144069 for more information.
+Issue caused by nw (in SetValues()->jlAxis.c:734) having its axis.unit_string set to a non-NULL but invalid memory location, in the case when SetValues() is called but there is no current signal
+being graphed (XtVaSetValues()->StripGraph.c:660 calls SetValues()->jlAxis.c:734). In this case, we pass the non-NULL check in SetValues() but segfault when strcmp tries to actually access the string's memory.
+Passing "NULL" instead of "0" as the XjNunitString gives us a proper NULL string inside of SetValues(), which will be correctly handled.
+
+Testing of fix:
+-connect to a signal, for example "ROOM:BSY0:1:OUTSIDETEMP"
+-remove the signal with "Remove" button 
+-program does not crash
+
 Release R2.5.18.0-1.0.0 (October 10th, 2022)
 
 A user reported that when printing an image of a chart to an elog, that image would always show up in black and white even if the original was in color, and often the orientation would be off as well. See CATER #147920 for more information.

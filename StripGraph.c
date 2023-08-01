@@ -665,7 +665,7 @@ void StripGraph_draw    (StripGraph     the_graph,
          XmNforeground, sgi->config->Color.foreground.xcolor.pixel,
          XmNbackground, sgi->config->Color.background.xcolor.pixel,
          XjNtextColor,  text_color,
-         XjNunitString, 0,
+         XjNunitString, NULL,
          XjNtransform,  XjAXIS_LINEAR,
          NULL);
     }
